@@ -2,10 +2,13 @@ package com.springboot.security.spring_jwt_security.service;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -17,14 +20,35 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.security.Key;
 
 @Service
 public class JwtService {
 
     Logger log = LoggerFactory.getLogger(JwtService.class);
-    private String secretKey="";
 
-    public JwtService(){
+    private static final long ACCESS_TOKEN_VALIDITY = 1000 * 60 * 15; // 15 min
+    private static final long REFRESH_TOKEN_VALIDITY = 1000 * 60 * 60 * 24 * 7; // 7 days
+    //private String secretKey="";
+
+    //@Autowired
+    //MyUserDetailsService userDetails;
+
+    @Value("${jwt.secret}")
+    private String secretKey;
+
+    @Value("${jwt.expiration}")
+    private long jwtExpiration;
+
+//    private Key getSignInKey() {
+//        return Keys.hmacShaKeyFor(secretKey.getBytes());
+//    }
+
+    private Key getSignInKey() {
+        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
+    }
+
+    /*public JwtService(){
         try {
             KeyGenerator keyGen = KeyGenerator.getInstance("HmacSHA256");
             SecretKey sk = keyGen.generateKey();
@@ -32,18 +56,28 @@ public class JwtService {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-    }
+    }*/
 
     public String generateToken(String username) {
         Map<String, Object> claims = new HashMap<>();
+       // claims.put("roles", userDetails.getAuthorities());
         return Jwts.builder()
                 .claims()
                 .add(claims)
                 .subject(username)
                 .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 3000))
+                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .and()
                 .signWith(getKey())
+                .compact();
+    }
+
+    public String generateRefreshToken(String username) {
+        return Jwts.builder()
+                .subject(username)
+                .issuedAt(new Date(System.currentTimeMillis()))
+                .expiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_VALIDITY))
+                .signWith(Jwts.SIG.HS256.key().build())
                 .compact();
     }
 

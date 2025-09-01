@@ -14,6 +14,9 @@ public class Users {
     @Column
     private String password;
 
+    @Column(nullable = false)
+    private String role;
+
     public int getId() {
         return id;
     }
@@ -37,13 +40,24 @@ public class Users {
     public void setPassword(String password) {
         this.password = password;
     }
-    public Users(){
 
+    public String getRole() {
+        return role;
     }
-    public Users(int id, String username, String password) {
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public Users(int id, String username, String password, String role) {
         this.id = id;
         this.username = username;
         this.password = password;
+        this.role = role;
+    }
+
+    public Users(){
+
     }
 
     @Override
@@ -52,6 +66,7 @@ public class Users {
                 "id=" + id +
                 ", username='" + username + '\'' +
                 ", password='" + password + '\'' +
+                ", role='" + role + '\'' +
                 '}';
     }
 }
